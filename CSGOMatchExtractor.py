@@ -32,8 +32,9 @@ def FetchMatchList(API_KEY, HubIDList, MatchLimit):
                         matchList = data["items"]
 
                         for match in matchList:
-                            matchID = match["match_id"]
-                            matchIDList.append(matchID)
+                            if match["status"] == "FINISHED":
+                                matchID = match["match_id"]
+                                matchIDList.append(matchID)
                         requestSuccess = True
                     else:
                         print(f"Request failed with status code: {response.status_code}")
