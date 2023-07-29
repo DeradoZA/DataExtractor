@@ -64,6 +64,6 @@ if __name__ == "__main__":
 
     HUB_ID_LIST = HUB_ID_LIST_ENV.split(',')
 
-    matchIDList = FetchMatchList(FACEIT_API_KEY, HUB_ID_LIST, 50000)
+    matchIDList = FetchMatchList(FACEIT_API_KEY, HUB_ID_LIST, 1000)
 
     MatchIDListSaver(matchIDList)
