@@ -3,9 +3,13 @@ import os
 import requests
 import csv
 
-def GameFetcher(API_KEY, match_id):
+def GameFetcher(match_id):
+    load_dotenv()
+
+    FACEIT_API_KEY = os.getenv('FACEIT_API_KEY')
+
     headers = {
-            'Authorization': f'Bearer {API_KEY}'
+            'Authorization': f'Bearer {FACEIT_API_KEY}'
     }
 
     URL = f'https://open.faceit.com/data/v4/matches/{match_id}/stats'
@@ -22,6 +26,31 @@ def GameFetcher(API_KEY, match_id):
     except requests.exceptions.RequestException as e:
         print(f"Error occured: {e}")
         return None
+    
+def PlayerHistoryFetcher(player_id):
+    FACEIT_API_KEY = os.getenv('FACEIT_API_KEY')
+    print(FACEIT_API_KEY)
+    
+    headers = {
+            'Authorization': f'Bearer {FACEIT_API_KEY}'
+    }
+
+    URL = f"https://open.faceit.com/data/v4/players/{player_id}/history?game=csgo&offset=0&limit=20"
+
+    try:
+        response = requests.get(URL, headers=headers)
+
+        if response.status_code == 200:
+            print("Game Fetch Successful")
+            data = response.json()
+            return data
+        else:
+            print(f"Request failed with response code: {response.status_code}")
+            return None
+    except requests.exceptions.RequestException as e:
+        print(f"Error occured: {e}")
+        return None
+
 
 def JSONGameParser(match):
     
@@ -42,30 +71,117 @@ def JSONGameParser(match):
     formattedTeamOnePlayerStats = TeamPlayerParser(teamOnePlayers)
     formattedTeamTwoPlayerStats = TeamPlayerParser(teamTwoPlayers)
 
+    if (formattedTeamOnePlayerStats == None or formattedTeamTwoPlayerStats == None):
+        print(f"Invalid match - history game not valid or too few games.")
+        return None
+
     formattedGame = formattedTeamOnePlayerStats + formattedTeamTwoPlayerStats
     formattedGame.append(ScoreDifference)
 
     return formattedGame
 
 def TeamPlayerParser(team):
-    playerStatsList = []
+    playerIDList = []
+    teamStats = []
 
     for player in team:
-        playerStats = player['player_stats']
+        playerID = player['player_id']
+        print(playerID)
+        playerStats = PlayerStatsCalculator(playerID)
 
-        playerStatsList.append(int(playerStats['Kills']))
-        playerStatsList.append(int(playerStats['Assists']))
-        playerStatsList.append(int(playerStats['Deaths']))
-        playerStatsList.append(int(playerStats['MVPs']))
-        playerStatsList.append(float(playerStats['Headshots %']))
-        playerStatsList.append(int(playerStats['Headshots']))
-        playerStatsList.append(float(playerStats['K/R Ratio']))
-        playerStatsList.append(float(playerStats['K/D Ratio']))
-        playerStatsList.append(int(playerStats['Triple Kills']))
-        playerStatsList.append(int(playerStats['Quadro Kills']))
-        playerStatsList.append(int(playerStats['Penta Kills']))
+        teamStats += playerStats
     
-    return playerStatsList
+    return teamStats
+
+def PlayerStatsCalculator(playerID):
+    playerHistory = PlayerHistoryFetcher(playerID)
+    playerMatchHistoryList = []
+
+    if len(playerHistory) < 5:
+        return None
+    
+    Kills = 0
+    Assists = 0
+    Deaths = 0
+    MVPs = 0
+    HeadshotsPerc = 0
+    Headshots = 0
+    KR_Ratio = 0
+    KD_Ratio = 0
+    Triple_Kills = 0
+    Quadro_Kills = 0
+    Penta_Kills = 0
+    numMatches = 0
+
+    for match in playerHistory['items']:
+        playerMatch = match['match_id']
+
+        matchStats = GameFetcher(playerMatch)
+
+        validationResult, validationResultInfo = GameValidator(matchStats)
+
+        if (validationResult == False):
+            return None
+        else:
+            numGames += 1
+        
+        team1Players = []
+        team2Players = []
+
+        team1 = matchStats['rounds'][0]['teams'][0]['players']
+        team2 = matchStats['rounds'][0]['teams'][1]['players']
+
+        for player in team1:
+            team1Players.append(player['player_id'])
+        
+        for player in team2:
+            team2Players.append(player['player_id'])
+        
+        if (playerID in team1):
+            playerStats = matchStats['rounds'][0]['teams'][0]['players'][team1.index(playerID)]['player_stats']
+        else:
+            playerStats = matchStats['rounds'][0]['teams'][0]['players'][team2.index(playerID)]['player_stats']
+
+        Kills += int(playerStats['Kills'])
+        Assists += int(playerStats['Assists'])
+        Deaths += int(playerStats['Deaths'])
+        MVPs += int(playerStats['MVPs'])
+        HeadshotsPerc += float(playerStats['Headshots %'])
+        Headshots += playerStats['Headshots']
+        KR_Ratio += float(playerStats['K/R Ratio'])
+        KD_Ratio += float(playerStats['K/D Ratio'])
+        Triple_Kills += int(playerStats['Triple Kills'])
+        Quadro_Kills += int(playerStats['Quadro Kills'])
+        Penta_Kills += int(playerStats['Penta Kills'])
+
+
+    averagedKills = Kills/numMatches
+    averagedAssists = Assists/numMatches
+    averagedDeaths = Deaths/numMatches
+    averagedMVPs = MVPs/numMatches
+    averagedHeadshotsPerc = HeadshotsPerc/numMatches
+    averagedHeadshots = Headshots/numMatches
+    averagedKR_Ratio = KR_Ratio/numMatches
+    averagedKD_Ratio = KD_Ratio/numMatches
+    averagedTKills = Triple_Kills/numMatches
+    averagedQKills = Quadro_Kills/numMatches
+    averagedPKills = Penta_Kills/numMatches
+
+    playerAveragedStats = []
+    playerAveragedStats.append(averagedKills)
+    playerAveragedStats.append(averagedAssists)
+    playerAveragedStats.append(averagedDeaths)
+    playerAveragedStats.append(averagedMVPs)
+    playerAveragedStats.append(averagedHeadshotsPerc)
+    playerAveragedStats.append(averagedHeadshots)
+    playerAveragedStats.append(averagedKR_Ratio)
+    playerAveragedStats.append(averagedKD_Ratio)
+    playerAveragedStats.append(averagedTKills)
+    playerAveragedStats.append(averagedQKills)
+    playerAveragedStats.append(averagedPKills)
+
+    return playerAveragedStats
+
 
 def GameValidator(match):
     validationResult = None
@@ -90,16 +206,13 @@ def GameValidator(match):
     return validationResult, validationResultInfo
 
 def WriteToCSV(formattedStats):
-    formattedStatsFile = os.path.join(os.getcwd(), "FormattedStats", "FormattedCSGOpredictiondata.csv")
+    formattedStatsFile = os.path.join(os.getcwd(), "FormattedStats", "FormattedCSGOStats.csv")
 
     with open(formattedStatsFile, mode='a', newline='')  as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(formattedStats)
 
 if __name__ == "__main__":
-    load_dotenv()
-
-    FACEIT_API_KEY = os.getenv('FACEIT_API_KEY')
     gameCounter = 0
     matchesFile = os.path.join(os.getcwd(), "Matches", "MatchIDList.txt")
     matchIdList = []
@@ -124,7 +237,7 @@ if __name__ == "__main__":
 
     for matchID in matchIdList:
         gameCounter += 1
-        matchStats = GameFetcher(FACEIT_API_KEY, matchID)
+        matchStats = GameFetcher(matchID)
         print(f"Amount of matches processed: {gameCounter}")
 
         if matchStats:
