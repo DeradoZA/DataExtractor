@@ -6,6 +6,7 @@ import time
 
 def FetchMatchList(API_KEY, HubIDList, MatchLimit):
     matchIDList = []
+    matchTimeList = []
     offset = 0
     LIMIT = 100
     iterationAmount = 0
@@ -34,7 +35,9 @@ def FetchMatchList(API_KEY, HubIDList, MatchLimit):
                         for match in matchList:
                             if match["status"] == "FINISHED":
                                 matchID = match["match_id"]
+                                matchTime = match["configured_at"]
                                 matchIDList.append(matchID)
+                                matchTimeList.append(matchTime)
                         requestSuccess = True
                     else:
                         print(f"Request failed with status code: {response.status_code}")
@@ -46,7 +49,7 @@ def FetchMatchList(API_KEY, HubIDList, MatchLimit):
 
     print("-------------PROCESSING COMPLETE--------------")
     print(f"Total number of matches fetched --> {len(matchIDList)}")
-    return matchIDList
+    return matchIDList, matchTimeList
 
 def MatchIDListSaver(matchIDList):
     print("Writing match IDs to disk")
@@ -64,6 +67,6 @@ if __name__ == "__main__":
 
     HUB_ID_LIST = HUB_ID_LIST_ENV.split(',')
 
-    matchIDList = FetchMatchList(FACEIT_API_KEY, HUB_ID_LIST, 1000)
+    matchIDList, matchTimeList = FetchMatchList(FACEIT_API_KEY, HUB_ID_LIST, 70000)
 
     MatchIDListSaver(matchIDList)

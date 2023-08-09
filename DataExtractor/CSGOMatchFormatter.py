@@ -1,15 +1,14 @@
 from dotenv import load_dotenv
+from mysql.connector import connect, Error
 import os
 import requests
 import csv
 
-def GameFetcher(match_id):
+def GameFetcher(match_id, API_KEY):
     load_dotenv()
 
-    FACEIT_API_KEY = os.getenv('FACEIT_API_KEY')
-
     headers = {
-            'Authorization': f'Bearer {FACEIT_API_KEY}'
+            'Authorization': f'Bearer {API_KEY}'
     }
 
     URL = f'https://open.faceit.com/data/v4/matches/{match_id}/stats'
@@ -17,31 +16,6 @@ def GameFetcher(match_id):
         response = requests.get(URL, headers=headers)
 
         if response.status_code == 200:
-            print("Game Fetch Successful")
-            data = response.json()
-            return data
-        else:
-            print(f"Request failed with response code: {response.status_code}")
-            return None
-    except requests.exceptions.RequestException as e:
-        print(f"Error occured: {e}")
-        return None
-    
-def PlayerHistoryFetcher(player_id):
-    FACEIT_API_KEY = os.getenv('FACEIT_API_KEY')
-    print(FACEIT_API_KEY)
-    
-    headers = {
-            'Authorization': f'Bearer {FACEIT_API_KEY}'
-    }
-
-    URL = f"https://open.faceit.com/data/v4/players/{player_id}/history?game=csgo&offset=0&limit=20"
-
-    try:
-        response = requests.get(URL, headers=headers)
-
-        if response.status_code == 200:
-            print("Game Fetch Successful")
             data = response.json()
             return data
         else:
@@ -51,136 +25,129 @@ def PlayerHistoryFetcher(player_id):
         print(f"Error occured: {e}")
         return None
 
-
-def JSONGameParser(match):
+def JSONGameParser(match, cursor, connection):
     
     validationResult, validationResultInfo = GameValidator(match)
+    finalResult = True
 
     if (validationResult == False):
-        print(f"Invalid match - {validationResultInfo}")
-        return None
+        finalResult = False
+        return finalResult, validationResultInfo
     
-    formattedGame = []
+    matchID = match['rounds'][0]['match_id']
+    map = match['rounds'][0]['round_stats']['Map']
+    teamOnePlayers = match['rounds'][0]['teams'][0]['players']
+    teamTwoPlayers = match['rounds'][0]['teams'][1]['players']
     TeamOneScore = int(match['rounds'][0]['teams'][0]['team_stats']['Final Score'])
     TeamTwoScore = int(match['rounds'][0]['teams'][1]['team_stats']['Final Score'])
 
-    teamOnePlayers = match['rounds'][0]['teams'][0]['players']
-    teamTwoPlayers = match['rounds'][0]['teams'][1]['players']
-    ScoreDifference = abs(TeamOneScore - TeamTwoScore)
 
-    formattedTeamOnePlayerStats = TeamPlayerParser(teamOnePlayers)
-    formattedTeamTwoPlayerStats = TeamPlayerParser(teamTwoPlayers)
+    #Match Queries
+    matchesQuery = f"SELECT * FROM Matches WHERE MatchID = '{matchID}'"
 
-    if (formattedTeamOnePlayerStats == None or formattedTeamTwoPlayerStats == None):
-        print(f"Invalid match - history game not valid or too few games.")
-        return None
+    cursor.execute(matchesQuery)
 
-    formattedGame = formattedTeamOnePlayerStats + formattedTeamTwoPlayerStats
-    formattedGame.append(ScoreDifference)
+    matchesResult = cursor.fetchall()
 
-    return formattedGame
+    if (len(matchesResult) == 0):
+        insertMatchQuery = f"""INSERT INTO Matches(MatchID, Team_1_Score, Team_2_Score, Map)
+          VALUES
+            ('{matchID}', {TeamOneScore}, {TeamTwoScore}, '{map}')
+        """
+        cursor.execute(insertMatchQuery)
+        connection.commit()
+    else:
+        finalResult = False
+        return finalResult, f"Match ('{matchID}') already inserted."
+    
+    #--------
 
-def TeamPlayerParser(team):
-    playerIDList = []
-    teamStats = []
-
-    for player in team:
+    #Player Queries
+    
+    for player in teamOnePlayers:
         playerID = player['player_id']
-        print(playerID)
-        playerStats = PlayerStatsCalculator(playerID)
 
-        teamStats += playerStats
+        playerSearchQuery = f"SELECT PlayerID FROM Players WHERE PlayerID = '{playerID}'"
+
+        cursor.execute(playerSearchQuery)
+        result = cursor.fetchall()
+
+        if (len(result) == 0 ):
+            playerInsertQuery = f"""INSERT INTO Players(PlayerID)
+            VALUES
+                ('{playerID}')
+            """
+            cursor.execute(playerInsertQuery)
+            connection.commit()
+
+    for player in teamTwoPlayers:
+        playerID = player['player_id']
+
+        playerSearchQuery = f"SELECT PlayerID FROM Players WHERE PlayerID = '{playerID}'"
+
+        cursor.execute(playerSearchQuery)
+        result = cursor.fetchall()
+
+        if (len(result) == 0 ):
+            playerInsertQuery = f"""INSERT INTO Players(PlayerID)
+            VALUES
+                ('{playerID}')
+            """
+            cursor.execute(playerInsertQuery)
+            connection.commit()
+
+    #----
+
+    #PlayerStats Queries
+
+    for player in teamOnePlayers:
+        playerID = player['player_id']
+        playerStats = PlayerStatsCollector(player)
+
+        playerStatsInsertQuery = f"""INSERT INTO
+          PlayerStats(PlayerID, MatchID, Kills, Assists, Deaths, Headshots, HeadshotsPerc, KR_Ratio, KD_Ratio, TripleKills, QuadroKills, PentaKills, MVPs)
+          VALUES
+            ('{playerID}', '{matchID}', {playerStats[0]}, {playerStats[1]}, {playerStats[2]}, {playerStats[3]}, {playerStats[4]}, {playerStats[5]},
+              {playerStats[6]}, {playerStats[7]}, {playerStats[8]}, {playerStats[9]}, {playerStats[10]})"""
+        
+        cursor.execute(playerStatsInsertQuery)
+        connection.commit()
+
+    for player in teamTwoPlayers:
+        playerID = player['player_id']
+        playerStats = PlayerStatsCollector(player)
+
+        playerStatsInsertQuery = f"""INSERT INTO
+          PlayerStats(PlayerID, MatchID, Kills, Assists, Deaths, Headshots, HeadshotsPerc, KR_Ratio, KD_Ratio, TripleKills, QuadroKills, PentaKills, MVPs)
+          VALUES
+            ('{playerID}', '{matchID}', {playerStats[0]}, {playerStats[1]}, {playerStats[2]}, {playerStats[3]}, {playerStats[4]}, {playerStats[5]},
+              {playerStats[6]}, {playerStats[7]}, {playerStats[8]}, {playerStats[9]}, {playerStats[10]})"""
+        
+        cursor.execute(playerStatsInsertQuery)
+        connection.commit()
     
-    return teamStats
+    #----
 
-def PlayerStatsCalculator(playerID):
-    playerHistory = PlayerHistoryFetcher(playerID)
-    playerMatchHistoryList = []
+    return finalResult, f"Match inserted successfully for matchID - {matchID}"
 
-    if len(playerHistory) < 5:
-        return None
-    
-    Kills = 0
-    Assists = 0
-    Deaths = 0
-    MVPs = 0
-    HeadshotsPerc = 0
-    Headshots = 0
-    KR_Ratio = 0
-    KD_Ratio = 0
-    Triple_Kills = 0
-    Quadro_Kills = 0
-    Penta_Kills = 0
-    numMatches = 0
+def PlayerStatsCollector(player):
+    playerStatsList = []
 
-    for match in playerHistory['items']:
-        playerMatch = match['match_id']
+    playerStats = player['player_stats']
 
-        matchStats = GameFetcher(playerMatch)
+    playerStatsList.append(int(playerStats['Kills']))
+    playerStatsList.append(int(playerStats['Assists']))
+    playerStatsList.append(int(playerStats['Deaths']))
+    playerStatsList.append(int(playerStats['Headshots']))
+    playerStatsList.append(float(playerStats['Headshots %']))
+    playerStatsList.append(float(playerStats['K/R Ratio']))
+    playerStatsList.append(float(playerStats['K/D Ratio']))
+    playerStatsList.append(int(playerStats['Triple Kills']))
+    playerStatsList.append(int(playerStats['Quadro Kills']))
+    playerStatsList.append(int(playerStats['Penta Kills']))
+    playerStatsList.append(int(playerStats['MVPs']))
 
-        validationResult, validationResultInfo = GameValidator(matchStats)
-
-        if (validationResult == False):
-            return None
-        else:
-            numGames += 1
-        
-        team1Players = []
-        team2Players = []
-
-        team1 = matchStats['rounds'][0]['teams'][0]['players']
-        team2 = matchStats['rounds'][0]['teams'][1]['players']
-
-        for player in team1:
-            team1Players.append(player['player_id'])
-        
-        for player in team2:
-            team2Players.append(player['player_id'])
-        
-        if (playerID in team1):
-            playerStats = matchStats['rounds'][0]['teams'][0]['players'][team1.index(playerID)]['player_stats']
-        else:
-            playerStats = matchStats['rounds'][0]['teams'][0]['players'][team2.index(playerID)]['player_stats']
-
-        Kills += int(playerStats['Kills'])
-        Assists += int(playerStats['Assists'])
-        Deaths += int(playerStats['Deaths'])
-        MVPs += int(playerStats['MVPs'])
-        HeadshotsPerc += float(playerStats['Headshots %'])
-        Headshots += playerStats['Headshots']
-        KR_Ratio += float(playerStats['K/R Ratio'])
-        KD_Ratio += float(playerStats['K/D Ratio'])
-        Triple_Kills += int(playerStats['Triple Kills'])
-        Quadro_Kills += int(playerStats['Quadro Kills'])
-        Penta_Kills += int(playerStats['Penta Kills'])
-
-
-    averagedKills = Kills/numMatches
-    averagedAssists = Assists/numMatches
-    averagedDeaths = Deaths/numMatches
-    averagedMVPs = MVPs/numMatches
-    averagedHeadshotsPerc = HeadshotsPerc/numMatches
-    averagedHeadshots = Headshots/numMatches
-    averagedKR_Ratio = KR_Ratio/numMatches
-    averagedKD_Ratio = KD_Ratio/numMatches
-    averagedTKills = Triple_Kills/numMatches
-    averagedQKills = Quadro_Kills/numMatches
-    averagedPKills = Penta_Kills/numMatches
-
-    playerAveragedStats = []
-    playerAveragedStats.append(averagedKills)
-    playerAveragedStats.append(averagedAssists)
-    playerAveragedStats.append(averagedDeaths)
-    playerAveragedStats.append(averagedMVPs)
-    playerAveragedStats.append(averagedHeadshotsPerc)
-    playerAveragedStats.append(averagedHeadshots)
-    playerAveragedStats.append(averagedKR_Ratio)
-    playerAveragedStats.append(averagedKD_Ratio)
-    playerAveragedStats.append(averagedTKills)
-    playerAveragedStats.append(averagedQKills)
-    playerAveragedStats.append(averagedPKills)
-
-    return playerAveragedStats
+    return playerStatsList
 
 
 def GameValidator(match):
@@ -213,35 +180,41 @@ def WriteToCSV(formattedStats):
         writer.writerow(formattedStats)
 
 if __name__ == "__main__":
+    load_dotenv()
     gameCounter = 0
     matchesFile = os.path.join(os.getcwd(), "Matches", "MatchIDList.txt")
     matchIdList = []
-    CSV_HEADER = [
-        "Team1_Player1_Kills", "Team1_Player1_Assists","Team1_Player1_Deaths", "Team1_Player1_MVPs","Team1_Player1_HeadshotPercentage", "Team1_Player1_Headshots","Team1_Player1_K/R-Ratio", "Team1_Player1_K/D-Ratio","Team1_Player1_TripleKills", "Team1_Player1_QuadroKills", "Team1_Player1_PentaKills",
-        "Team1_Player2_Kills", "Team1_Player2_Assists","Team1_Player2_Deaths", "Team1_Player2_MVPs","Team1_Player2_HeadshotPercentage", "Team1_Player2_Headshots","Team1_Player2_K/R-Ratio", "Team1_Player2_K/D-Ratio","Team1_Player2_TripleKills", "Team1_Player2_QuadroKills", "Team1_Player2_PentaKills",
-        "Team1_Player3_Kills", "Team1_Player3_Assists","Team1_Player3_Deaths", "Team1_Player3_MVPs","Team1_Player3_HeadshotPercentage", "Team1_Player3_Headshots","Team1_Player3_K/R-Ratio", "Team1_Player3_K/D-Ratio","Team1_Player3_TripleKills", "Team1_Player3_QuadroKills", "Team1_Player3_PentaKills",
-        "Team1_Player4_Kills", "Team1_Player4_Assists","Team1_Player4_Deaths", "Team1_Player4_MVPs","Team1_Player4_HeadshotPercentage", "Team1_Player4_Headshots","Team1_Player4_K/R-Ratio", "Team1_Player4_K/D-Ratio","Team1_Player4_TripleKills", "Team1_Player4_QuadroKills", "Team1_Player4_PentaKills",
-        "Team1_Player5_Kills", "Team1_Player5_Assists","Team1_Player5_Deaths", "Team1_Player5_MVPs","Team1_Player5_HeadshotPercentage", "Team1_Player5_Headshots","Team1_Player5_K/R-Ratio", "Team1_Player5_K/D-Ratio","Team1_Player5_TripleKills", "Team1_Player5_QuadroKills", "Team1_Player5_PentaKills",
-        "Team2_Player1_Kills", "Team2_Player1_Assists","Team2_Player1_Deaths", "Team2_Player1_MVPs","Team2_Player1_HeadshotPercentage", "Team2_Player1_Headshots","Team2_Player1_K/R-Ratio", "Team2_Player1_K/D-Ratio","Team2_Player1_TripleKills", "Team2_Player1_QuadroKills", "Team2_Player1_PentaKills",
-        "Team2_Player2_Kills", "Team2_Player2_Assists","Team2_Player2_Deaths", "Team2_Player2_MVPs","Team2_Player2_HeadshotPercentage", "Team2_Player2_Headshots","Team2_Player2_K/R-Ratio", "Team2_Player2_K/D-Ratio","Team2_Player2_TripleKills", "Team2_Player2_QuadroKills", "Team2_Player2_PentaKills",
-        "Team2_Player3_Kills", "Team2_Player3_Assists","Team2_Player3_Deaths", "Team2_Player3_MVPs","Team2_Player3_HeadshotPercentage", "Team2_Player3_Headshots","Team2_Player3_K/R-Ratio", "Team2_Player3_K/D-Ratio","Team2_Player3_TripleKills", "Team2_Player3_QuadroKills", "Team2_Player3_PentaKills",
-        "Team2_Player4_Kills", "Team2_Player4_Assists","Team2_Player4_Deaths", "Team2_Player4_MVPs","Team2_Player4_HeadshotPercentage", "Team2_Player4_Headshots","Team2_Player4_K/R-Ratio", "Team2_Player4_K/D-Ratio","Team2_Player4_TripleKills", "Team2_Player4_QuadroKills", "Team2_Player4_PentaKills",
-        "Team2_Player5_Kills", "Team2_Player5_Assists","Team2_Player5_Deaths", "Team2_Player5_MVPs","Team2_Player5_HeadshotPercentage", "Team2_Player5_Headshots","Team2_Player5_K/R-Ratio", "Team2_Player5_K/D-Ratio","Team2_Player5_TripleKills", "Team2_Player5_QuadroKills", "Team2_Player5_PentaKills",
-        "ScoreDifference"
-    ]   
-
-    WriteToCSV(CSV_HEADER)
+    FACEIT_API_KEY =  os.getenv('FACEIT_API_KEY')
 
     with open(matchesFile, 'r') as file:
         matchIdList = file.readlines()
 
-    for matchID in matchIdList:
-        gameCounter += 1
-        matchStats = GameFetcher(matchID)
-        print(f"Amount of matches processed: {gameCounter}")
+    try:
+        connection = connect(
+            host = "localhost",
+            user = os.getenv("DB_USER"),
+            password = os.getenv("DB_USER_PASSWORD"),
+            database = os.getenv("CSGO_DB")
+        )
+        cursor = connection.cursor()
 
-        if matchStats:
-            formattedStats = JSONGameParser(matchStats)
-            if formattedStats:
-                WriteToCSV(formattedStats)
+        for matchID in matchIdList:
+            gameCounter += 1
+            matchStats = GameFetcher(matchID, FACEIT_API_KEY)
+            print(f"PROCESSING MATCH - {gameCounter} out of {len(matchIdList)}")
+
+            if matchStats:
+                parseResult, parseMessage = JSONGameParser(matchStats, cursor, connection)
+                if parseResult:
+                    print(f"{matchID}")
+                else:
+                    print(f"PROCESSING ERROR --> {parseMessage}")
+
+        print("FINISHED")
+        cursor.close()
+        connection.close()
+
+    except Error as e:
+        print(e)
+
 
