@@ -10,6 +10,8 @@ def FetchMatchList(API_KEY, HubIDList, MatchLimit):
     offset = 0
     LIMIT = 100
     iterationAmount = 0
+    file = open("MatchIDList.txt", 'w')
+    gamesProcessedCounter = 0
 
     headers = {
             'Authorization': f'Bearer {FACEIT_API_KEY}'
@@ -22,7 +24,7 @@ def FetchMatchList(API_KEY, HubIDList, MatchLimit):
             requestSuccess = False
             URL = f"https://open.faceit.com/data/v4/hubs/{hub}/matches?offset={offset}&limit={LIMIT}"
             iterationAmount += 1
-            print(f"Iteration number {iterationAmount}, matches processed {len(matchIDList)}")
+            print(f"Iteration number {iterationAmount}, matches processed {gamesProcessedCounter}")
 
             while (requestSuccess == False):
                 try:
@@ -36,8 +38,9 @@ def FetchMatchList(API_KEY, HubIDList, MatchLimit):
                             if match["status"] == "FINISHED":
                                 matchID = match["match_id"]
                                 matchTime = match["configured_at"]
-                                matchIDList.append(matchID)
-                                matchTimeList.append(matchTime)
+                                matchInfo = f"{matchID},{matchTime}"
+                                file.write(f"{matchInfo}\n")
+                                gamesProcessedCounter += 1
                         requestSuccess = True
                     else:
                         print(f"Request failed with status code: {response.status_code}")
@@ -51,12 +54,6 @@ def FetchMatchList(API_KEY, HubIDList, MatchLimit):
     print(f"Total number of matches fetched --> {len(matchIDList)}")
     return matchIDList, matchTimeList
 
-def MatchIDListSaver(matchIDList):
-    print("Writing match IDs to disk")
-    with open("MatchIDList.txt", 'w') as file:
-        for matchID in matchIDList:
-            file.write(f"{matchID}\n")
-
 
 
 if __name__ == "__main__":
@@ -68,5 +65,3 @@ if __name__ == "__main__":
     HUB_ID_LIST = HUB_ID_LIST_ENV.split(',')
 
     matchIDList, matchTimeList = FetchMatchList(FACEIT_API_KEY, HUB_ID_LIST, 70000)
-
-    MatchIDListSaver(matchIDList)

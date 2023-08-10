@@ -8,6 +8,7 @@ CREATE TABLE Matches (
     Team_1_Score int,
     Team_2_Score int,
     Map varchar(255),
+    MatchTime int,
     PRIMARY KEY (MatchID)
 );
 
@@ -19,6 +20,7 @@ CREATE TABLE Players (
 CREATE TABLE PlayerStats(
     PlayerID varchar(255) NOT NULL,
     MatchID varchar(255) NOT NULL,
+    Team int,
     Kills int,
     Assists int,
     Deaths int,

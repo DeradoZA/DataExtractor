@@ -25,7 +25,7 @@ def GameFetcher(match_id, API_KEY):
         print(f"Error occured: {e}")
         return None
 
-def JSONGameParser(match, cursor, connection):
+def JSONGameParser(match, matchTime, cursor, connection):
     
     validationResult, validationResultInfo = GameValidator(match)
     finalResult = True
@@ -50,9 +50,9 @@ def JSONGameParser(match, cursor, connection):
     matchesResult = cursor.fetchall()
 
     if (len(matchesResult) == 0):
-        insertMatchQuery = f"""INSERT INTO Matches(MatchID, Team_1_Score, Team_2_Score, Map)
+        insertMatchQuery = f"""INSERT INTO Matches(MatchID, Team_1_Score, Team_2_Score, Map, MatchTime)
           VALUES
-            ('{matchID}', {TeamOneScore}, {TeamTwoScore}, '{map}')
+            ('{matchID}', {TeamOneScore}, {TeamTwoScore}, '{map}', {matchTime})
         """
         cursor.execute(insertMatchQuery)
         connection.commit()
@@ -101,26 +101,28 @@ def JSONGameParser(match, cursor, connection):
     #PlayerStats Queries
 
     for player in teamOnePlayers:
+        teamValue = 1
         playerID = player['player_id']
         playerStats = PlayerStatsCollector(player)
 
         playerStatsInsertQuery = f"""INSERT INTO
-          PlayerStats(PlayerID, MatchID, Kills, Assists, Deaths, Headshots, HeadshotsPerc, KR_Ratio, KD_Ratio, TripleKills, QuadroKills, PentaKills, MVPs)
+          PlayerStats(PlayerID, MatchID, Team, Kills, Assists, Deaths, Headshots, HeadshotsPerc, KR_Ratio, KD_Ratio, TripleKills, QuadroKills, PentaKills, MVPs)
           VALUES
-            ('{playerID}', '{matchID}', {playerStats[0]}, {playerStats[1]}, {playerStats[2]}, {playerStats[3]}, {playerStats[4]}, {playerStats[5]},
+            ('{playerID}', '{matchID}', {teamValue}, {playerStats[0]}, {playerStats[1]}, {playerStats[2]}, {playerStats[3]}, {playerStats[4]}, {playerStats[5]},
               {playerStats[6]}, {playerStats[7]}, {playerStats[8]}, {playerStats[9]}, {playerStats[10]})"""
         
         cursor.execute(playerStatsInsertQuery)
         connection.commit()
 
     for player in teamTwoPlayers:
+        teamValue = 2
         playerID = player['player_id']
         playerStats = PlayerStatsCollector(player)
 
         playerStatsInsertQuery = f"""INSERT INTO
-          PlayerStats(PlayerID, MatchID, Kills, Assists, Deaths, Headshots, HeadshotsPerc, KR_Ratio, KD_Ratio, TripleKills, QuadroKills, PentaKills, MVPs)
+          PlayerStats(PlayerID, MatchID, Team, Kills, Assists, Deaths, Headshots, HeadshotsPerc, KR_Ratio, KD_Ratio, TripleKills, QuadroKills, PentaKills, MVPs)
           VALUES
-            ('{playerID}', '{matchID}', {playerStats[0]}, {playerStats[1]}, {playerStats[2]}, {playerStats[3]}, {playerStats[4]}, {playerStats[5]},
+            ('{playerID}', '{matchID}', {teamValue}, {playerStats[0]}, {playerStats[1]}, {playerStats[2]}, {playerStats[3]}, {playerStats[4]}, {playerStats[5]},
               {playerStats[6]}, {playerStats[7]}, {playerStats[8]}, {playerStats[9]}, {playerStats[10]})"""
         
         cursor.execute(playerStatsInsertQuery)
@@ -183,11 +185,11 @@ if __name__ == "__main__":
     load_dotenv()
     gameCounter = 0
     matchesFile = os.path.join(os.getcwd(), "Matches", "MatchIDList.txt")
-    matchIdList = []
+    matchInfoList = []
     FACEIT_API_KEY =  os.getenv('FACEIT_API_KEY')
 
     with open(matchesFile, 'r') as file:
-        matchIdList = file.readlines()
+        matchInfoList = file.readlines()
 
     try:
         connection = connect(
@@ -198,13 +200,16 @@ if __name__ == "__main__":
         )
         cursor = connection.cursor()
 
-        for matchID in matchIdList:
+        for matchInfo in matchInfoList:
             gameCounter += 1
+            matchDetails = matchInfo.split(',')
+            matchID = matchDetails[0]
+            matchTime = int(matchDetails[1])
             matchStats = GameFetcher(matchID, FACEIT_API_KEY)
-            print(f"PROCESSING MATCH - {gameCounter} out of {len(matchIdList)}")
+            print(f"PROCESSING MATCH - {gameCounter} out of {len(matchInfoList)}")
 
             if matchStats:
-                parseResult, parseMessage = JSONGameParser(matchStats, cursor, connection)
+                parseResult, parseMessage = JSONGameParser(matchStats, matchTime, cursor, connection)
                 if parseResult:
                     print(f"{matchID}")
                 else:
