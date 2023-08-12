@@ -6,7 +6,7 @@ import numpy as np
 
 
 if __name__ == "__main__":
-    dataCSV = os.path.join(os.getcwd(), "..", "DataExtractor", "FormattedStats", "FormattedCSGOStats.csv")
+    dataCSV = os.path.join(os.getcwd(), "..", "DataExtractor", "FormattedStats", "CSGODataset.csv")
     modelSaveFolder = os.path.join(os.getcwd(), "models")
 
     df = pd.read_csv(dataCSV)
@@ -31,6 +31,7 @@ if __name__ == "__main__":
     model = tf.keras.Sequential(
         [
             tf.keras.layers.Dense(110, activation='relu'),
+            tf.keras.layers.Dense(64, activation='relu'),
             tf.keras.layers.Dense(64, activation='relu'),
             tf.keras.layers.Dense(1)
         ]
