@@ -6,16 +6,16 @@ from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
 # Path to the file containing the links
-links_file_path = 'demos.txt'
+links_file_path = 'demo2.txt'
 
 # Directory to save downloaded and extracted files
-output_directory = "C:/Users/S_CSIS-PostGrad/Documents/Honours/Project/MLMatchMaker/CSGODemo/demos"
+output_directory = "C:/Users/S_CSIS-PostGrad/Documents/ML-MatchMaker/CSGODemo/demos"
 
 # Create the output directory if it doesn't exist
 os.makedirs(output_directory, exist_ok=True)
 
 # Path to the directory where processed demos will be saved
-processed_output_directory = 'C:/Users/S_CSIS-PostGrad/Documents/Honours/Project/MLMatchMaker/CSGODemo/PorcessedDemos'
+processed_output_directory = 'C:/Users/S_CSIS-PostGrad/Documents/ML-MatchMaker/CSGODemo/ProcessedDemos'
 
 # Define a custom user agent
 user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
