@@ -13,12 +13,13 @@ CREATE TABLE Matches (
 );
 
 CREATE TABLE Players (
-    PlayerID varchar(255) NOT NULL,
-    PRIMARY KEY (PlayerID)
+    steamID varchar(255) NOT NULL,
+    playerID varchar(255),
+    PRIMARY KEY (steamID)
 );
 
 CREATE TABLE PlayerStats(
-    PlayerID varchar(255) NOT NULL,
+    steamID varchar(255) NOT NULL,
     MatchID varchar(255) NOT NULL,
     Team int,
     Kills int,
@@ -32,7 +33,22 @@ CREATE TABLE PlayerStats(
     QuadroKills int,
     PentaKills int,
     MVPs int,
-    PRIMARY KEY (PlayerID, MatchID),
-    FOREIGN KEY (PlayerID) REFERENCES Players(PlayerID),
+    KAST float,
+    EntryKills int,
+    BombDefused int,
+    BombPlanted int,
+    RWS float,
+    Rating float,
+    Rating2 float,
+    ATD float,
+    ADR float,
+    TradeKills int,
+    ClutchWinPer float,
+    totalSmokes int,
+    totalFalshes int,
+    totalFire int,
+    totalHE int,
+    PRIMARY KEY (steamID, MatchID),
+    FOREIGN KEY (steamID) REFERENCES Players(steamID),
     FOREIGN KEY (MatchID) REFERENCES Matches(MatchID)
 );
