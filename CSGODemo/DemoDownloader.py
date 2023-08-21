@@ -1,21 +1,17 @@
 import os
 import urllib.request
 import gzip
-import subprocess
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
 # Path to the file containing the links
-links_file_path = 'demo2.txt'
+links_file_path = 'demos.txt'
 
 # Directory to save downloaded and extracted files
-output_directory = "C:/Users/S_CSIS-PostGrad/Documents/ML-MatchMaker/CSGODemo/demos"
+output_directory = "C:/Users/S_CSIS-PostGrad/Documents/Honours/Project/MLMatchMaker/CSGODemo/demos"
 
 # Create the output directory if it doesn't exist
 os.makedirs(output_directory, exist_ok=True)
-
-# Path to the directory where processed demos will be saved
-processed_output_directory = 'C:/Users/S_CSIS-PostGrad/Documents/ML-MatchMaker/CSGODemo/ProcessedDemos'
 
 # Define a custom user agent
 user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -45,16 +41,6 @@ def download_and_extract(index, line):
 
         print(f"Downloaded and extracted: {extracted_filename}")
 
-        # Run CLI command to convert demo to xlsx format
-        xlsx_output_path = os.path.join(processed_output_directory, extracted_filename.replace('.dem', '.xlsx'))
-        command = f'csgodm xlsx "{extracted_path}" --output "{processed_output_directory}"'
-        subprocess.run(command, shell=True)
-
-        # Remove the extracted file
-        os.remove(extracted_path)
-
-        print(f"Converted and cleaned up: {extracted_filename}")
-
 # Read the links from the file and process each line using multithreading
 with open(links_file_path, 'r') as file:
     lines = file.readlines()
@@ -65,4 +51,4 @@ with open(links_file_path, 'r') as file:
         for future in tqdm(futures, total=total_lines, desc="Progress"):
             future.result()
 
-print("All files downloaded, extracted, converted, and cleaned up.")
+print("All files downloaded and extracted.")
