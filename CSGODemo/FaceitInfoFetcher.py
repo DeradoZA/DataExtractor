@@ -35,8 +35,60 @@ def UpdateIDs(steamIDList, API_KEY, cursor, connection):
                 cursor.execute(updateQuery)
                 connection.commit()
                 print(f"Player - {steamID} - UPDATED")
-            
 
+def UpdateMatchTimes(matchList, API_KEY, cursor, connection):
+    progress = 0
+
+    for match in matchList:
+        progress += 1
+        print(f"UPDATING MATCH - {progress} OUT OF {len(matchList)} [{match}]")
+
+        matchTime = matchTimeFetcher(API_KEY, match)
+
+        updateQuery = f"""
+            UPDATE matches m
+            SET m.MatchTIme = {matchTime}
+            WHERE m.matchID = '{match}'
+        """
+        cursor.execute(updateQuery)
+        connection.commit()
+
+        print(f"UPDATED MATCH --> {match}")
+
+
+def matchTimeFetcher(API_KEY, matchID):
+    URL=f"https://open.faceit.com/data/v4/matches/{matchID}"
+
+    headers = {
+            'Authorization': f'Bearer {API_KEY}'
+    }
+
+    try:
+        response = requests.get(URL, headers=headers)
+
+        if response.status_code == 200:
+            data = response.json()
+            matchTime = data.get('configured_at', 0)
+            return matchTime
+    except Error as e:
+        print(e)
+        return None
+
+def GetAllMatches(cursor):
+    matchList = []
+
+    matchesQuery = f"""
+        SELECT MatchID
+        from matches
+        WHERE MatchTime = {0}
+    """
+    cursor.execute(matchesQuery)
+    queryResult = cursor.fetchall()
+
+    for result in queryResult:
+        matchList.append(result[0])
+
+    return matchList
 
 def FaceitIDFetcher(API_KEY, steamID):
     URL = f"https://open.faceit.com/data/v4/players?game=csgo&game_player_id={steamID}"
@@ -97,3 +149,7 @@ if __name__ == "__main__":
     steamIDList = GetSteamIDs(cursor)
 
     UpdateIDs(steamIDList, FACEIT_API_KEY, cursor, connection)
+
+    matchList = GetAllMatches(cursor)
+
+    UpdateMatchTimes(matchList, FACEIT_API_KEY, cursor, connection)
