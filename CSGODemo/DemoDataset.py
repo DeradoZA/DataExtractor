@@ -2,6 +2,24 @@ from mysql.connector import Error, connect
 import os
 from dotenv import load_dotenv
 import csv
+import matplotlib.pyplot as plt
+
+def analyzeValues(stat, match, cursor):
+    query = f"""
+        SELECT SUM({stat}), Team
+        FROM playerstats ps
+        where ps.MatchID = '{match}'
+        GROUP BY ps.team
+    """
+    cursor.execute(query)
+
+    queryResult = cursor.fetchall()
+
+    team1Kills = queryResult[0][0]
+    team2Kills = queryResult[1][0]
+
+    return team1Kills, team2Kills
+
 
 def calculate_team_averages(match_info, match, cursor):
     team1_stats = match_info[:70]  # Assuming the first 70 elements are for Team 1 stats
@@ -259,16 +277,40 @@ if __name__ == "__main__":
     AVERAGE_CLASSIFICATION_HEADER.extend(["Team_1_Win?", "ScoreDifference", "closeMatch?"])
 
     CSVCreator(AVERAGE_CLASSIFICATION_HEADER, 'AveragedDataset.csv')
-
+    choice = input("Create(c)/Analyze(a)")
     matchList = GetAllMatches(cursor)
-    progress = 0
-    for match in matchList:
-        progress += 1
 
-        print(f"UPDATING MATCH - {progress} OUT OF {len(matchList)} [{match}]")
-        matchInfo = MatchProcessor(match, cursor)
-        teamAverages = calculate_team_averages(matchInfo, match, cursor)
-        print(teamAverages)
-        CSVCreator(matchInfo, "CSGODataset.csv")
-        CSVCreator(teamAverages, 'AveragedDataset.csv')
+    if(choice == 'c'):
+        progress = 0
+        for match in matchList:
+            progress += 1
+
+            print(f"UPDATING MATCH - {progress} OUT OF {len(matchList)} [{match}]")
+            matchInfo = MatchProcessor(match, cursor)
+            teamAverages = calculate_team_averages(matchInfo, match, cursor)
+            print(teamAverages)
+            CSVCreator(matchInfo, "CSGODataset.csv")
+            CSVCreator(teamAverages, 'AveragedDataset.csv')
+
+    statDiffs = []
+    scoreDiffs = []
+    stat = 'RWS'
+
+    for match in matchList:
+        team1Kills, team2Kills = analyzeValues(stat, match, cursor)
+
+        statDiff = abs(team2Kills - team1Kills)
+
+        team1Winner, scoreDifference, closeMatch = getMatchResult(match, cursor)
+
+        statDiffs.append(float(statDiff))
+        scoreDiffs.append(scoreDifference)
+
+    plt.figure(figsize=(10, 6))
+    plt.scatter(statDiffs, scoreDiffs, color='blue aa', alpha=0.7)
+    plt.title('statDiffs vs scoreDiffs')
+    plt.xlabel('Score Differences')
+    plt.ylabel(f'{stat} Differences')
+    plt.grid(True)
+    plt.show()
     
