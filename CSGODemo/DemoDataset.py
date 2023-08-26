@@ -307,8 +307,8 @@ if __name__ == "__main__":
         scoreDiffs.append(scoreDifference)
 
     plt.figure(figsize=(10, 6))
-    plt.scatter(statDiffs, scoreDiffs, color='blue aa', alpha=0.7)
-    plt.title('statDiffs vs scoreDiffs')
+    plt.scatter(statDiffs, scoreDiffs, color='blue', alpha=0.7)
+    plt.title('statDiffs vs scoreDiffsaa')
     plt.xlabel('Score Differences')
     plt.ylabel(f'{stat} Differences')
     plt.grid(True)
