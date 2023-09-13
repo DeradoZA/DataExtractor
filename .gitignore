@@ -2,4 +2,7 @@
 Matches/
 FormattedStats/
 PorcessedDemos/
+ProcessedDemos/
 demos/
+.\CSGODemo\Dataset\
+modelSave/

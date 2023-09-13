@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 import time
 from datetime import datetime, timedelta
+from mysql.connector import Error, connect
 
 def FetchMatchList(API_KEY, HubIDList, MatchLimit):
     matchIDList = []
@@ -76,5 +77,22 @@ if __name__ == "__main__":
     HUB_ID_LIST_ENV = os.getenv('FACEIT_HUB_ID_LIST')
 
     HUB_ID_LIST = HUB_ID_LIST_ENV.split(',')
+
+    DB_USER = os.getenv("DB_USER")
+    DB = os.getenv("CSGO_DB")
+    DB_PW = os.getenv("DB_USER_PASSWORD")
+    FACEIT_API_KEY = os.getenv("FACEIT_API_KEY")
+
+    try:
+        connection = connect(
+            host = "localhost",
+            user = DB_USER,
+            password = DB_PW,
+            database = DB
+        )
+
+        cursor = connection.cursor()
+    except Error as e:
+        print(e)
 
     matchIDList, matchTimeList = FetchMatchList(FACEIT_API_KEY, HUB_ID_LIST, 70000)

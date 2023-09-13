@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS PlayerStats;
 DROP TABLE IF EXISTS Players;
 DROP TABLE IF EXISTS Matches;
+DROP TABLE IF EXISTS PlayerELOs;
 
 
 CREATE TABLE Matches (
@@ -8,7 +9,7 @@ CREATE TABLE Matches (
     Team_1_Score int,
     Team_2_Score int,
     Map varchar(255),
-    MatchTime int,
+    MatchTime bigint(20),
     PRIMARY KEY (MatchID)
 );
 
@@ -51,4 +52,13 @@ CREATE TABLE PlayerStats(
     PRIMARY KEY (steamID, MatchID),
     FOREIGN KEY (steamID) REFERENCES Players(steamID),
     FOREIGN KEY (MatchID) REFERENCES Matches(MatchID)
+);
+
+CREATE TABLE PlayerELOs(
+    steamID varchar(255) NOT NULL,
+    MatchID varchar(255) NOT NULL,
+    MatchTime bigint(20),
+    MatchType varchar(255),
+    ELO int,
+    PRIMARY KEY(steamID, MatchID)
 );
