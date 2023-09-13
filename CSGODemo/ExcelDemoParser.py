@@ -89,7 +89,11 @@ def MatchInfoExtractor(path, file, cursor, connection):
                             KAST, EntryKills, BombDefused, BombPlanted,
                             RWS, Rating, Rating2, ATD, ADR,
                             TradeKills, ClutchWinPer, totalSmokes,
+<<<<<<< HEAD
                             totalFalshes, totalFire, totalHE
+=======
+                            totalFalshes, totalFire, totalHE, ELO
+>>>>>>> e376f749dc59d6869633a4e058a242570fb2d9e7
                         )
                         VALUES (
                             '{playerInfo["SteamID"]}', '{matchID}', {playerTeamNum}, {int(playerInfo["Kills"])}, {int(playerInfo["Assists"])}, {int(playerInfo["Deaths"])},
@@ -98,7 +102,11 @@ def MatchInfoExtractor(path, file, cursor, connection):
                             {comma_to_float(playerInfo["KAST"])}, {int(playerInfo["Entry kill"])}, {int(playerInfo["Bomb defused"])}, {int(playerInfo["Bomb planted"])},
                             {comma_to_float(playerInfo["RWS"])}, {comma_to_float(playerInfo["Rating"])}, {comma_to_float(playerInfo["Rating 2"])}, {comma_to_float(playerInfo["ATD (s)"])}, {comma_to_float(playerInfo["ADR"])},
                             {int(playerInfo["Trade kill"])}, {0}, {int(playerInfo["Smoke"])},
+<<<<<<< HEAD
                             {int(playerInfo["Flashbang"])}, {int(playerInfo["Incendiary"])}, {int(playerInfo["HE"])}
+=======
+                            {int(playerInfo["Flashbang"])}, {int(playerInfo["Incendiary"])}, {int(playerInfo["HE"])}, {0}
+>>>>>>> e376f749dc59d6869633a4e058a242570fb2d9e7
                         )
                     """
 

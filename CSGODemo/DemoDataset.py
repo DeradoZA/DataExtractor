@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 import csv
 import matplotlib.pyplot as plt
+<<<<<<< HEAD
 import numpy as np
 
 #--- Individual stats CSV
@@ -218,6 +219,8 @@ def getAllPlayerStats(cursor):
 #---
 
     
+=======
+>>>>>>> e376f749dc59d6869633a4e058a242570fb2d9e7
 
 def analyzeValues(stat, match, cursor):
     query = f"""
@@ -246,7 +249,11 @@ def calculate_team_averages(match_info, match, cursor):
     # Calculate averages for Team 2 stats
     team2_averages = [sum([x for x in team2_stats[i::14] if x is not None]) / len([x for x in team2_stats[i::14] if x is not None]) for i in range(14)]
 
+<<<<<<< HEAD
     matchOutcome, scoreDifference, closeMatch, team1Score, team2Score = getMatchResult(match, cursor)
+=======
+    matchOutcome, scoreDifference, closeMatch = getMatchResult(match, cursor)
+>>>>>>> e376f749dc59d6869633a4e058a242570fb2d9e7
 
     fullStats = team1_averages + team2_averages
     fullStats.append(matchOutcome)
@@ -260,7 +267,11 @@ def MatchProcessor(match, cursor):
 
     team1Stats = GetTeamStats(team1Players, match, cursor)
     team2Stats = GetTeamStats(team2Players, match, cursor)
+<<<<<<< HEAD
     matchOutcome, scoreDifference, closeMatch, team1Score, team2Score = getMatchResult(match, cursor)
+=======
+    matchOutcome, scoreDifference, closeMatch = getMatchResult(match, cursor)
+>>>>>>> e376f749dc59d6869633a4e058a242570fb2d9e7
 
     fullMatchStats = team1Stats + team2Stats
     fullMatchStats.append(matchOutcome)
@@ -291,6 +302,7 @@ def getMatchResult(match, cursor):
         closeMatch = 1
 
     if (team1Score > team2Score):
+<<<<<<< HEAD
         return team1Winner, scoreDifference, closeMatch, team1Score, team2Score #Team 1 won the match
     elif (team1Score == team2Score):
         team1Winner = 2 #Team 1, draw or faulty statistic
@@ -298,6 +310,15 @@ def getMatchResult(match, cursor):
     else:
         team1Winner = 0 #Team 1 lost the match
         return team1Winner, scoreDifference, closeMatch, team1Score, team2Score
+=======
+        return team1Winner, scoreDifference, closeMatch #Team 1 won the match
+    elif (team1Score == team2Score):
+        team1Winner = 2 #Team 1, draw or faulty statistic
+        return team1Winner, scoreDifference, closeMatch
+    else:
+        team1Winner = 0 #Team 1 lost the match
+        return team1Winner, scoreDifference, closeMatch
+>>>>>>> e376f749dc59d6869633a4e058a242570fb2d9e7
 
 
 def GetTeamStats(team, match, cursor):
@@ -492,7 +513,11 @@ if __name__ == "__main__":
     AVERAGE_CLASSIFICATION_HEADER.extend(["Team_1_Win?", "ScoreDifference", "closeMatch?"])
 
     CSVCreator(AVERAGE_CLASSIFICATION_HEADER, 'AveragedDataset.csv')
+<<<<<<< HEAD
     choice = input("Create(c)/Analyze(a)/Individual(i)")
+=======
+    choice = input("Create(c)/Analyze(a)")
+>>>>>>> e376f749dc59d6869633a4e058a242570fb2d9e7
     matchList = GetAllMatches(cursor)
 
     if(choice == 'c'):
@@ -507,6 +532,7 @@ if __name__ == "__main__":
             CSVCreator(matchInfo, "CSGODataset.csv")
             CSVCreator(teamAverages, 'AveragedDataset.csv')
 
+<<<<<<< HEAD
     if(choice == 'a'):
         statDiffs = []
         scoreDiffs = []
@@ -579,3 +605,27 @@ if __name__ == "__main__":
 
 
 
+=======
+    statDiffs = []
+    scoreDiffs = []
+    stat = 'RWS'
+
+    for match in matchList:
+        team1Kills, team2Kills = analyzeValues(stat, match, cursor)
+
+        statDiff = abs(team2Kills - team1Kills)
+
+        team1Winner, scoreDifference, closeMatch = getMatchResult(match, cursor)
+
+        statDiffs.append(float(statDiff))
+        scoreDiffs.append(scoreDifference)
+
+    plt.figure(figsize=(10, 6))
+    plt.scatter(statDiffs, scoreDiffs, color='blue', alpha=0.7)
+    plt.title('statDiffs vs scoreDiffsaa')
+    plt.xlabel('Score Differences')
+    plt.ylabel(f'{stat} Differences')
+    plt.grid(True)
+    plt.show()
+    
+>>>>>>> e376f749dc59d6869633a4e058a242570fb2d9e7
