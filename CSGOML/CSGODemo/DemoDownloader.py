@@ -5,7 +5,7 @@ from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
 # Path to the file containing the links
-links_file_path = 'demos.txt'
+links_file_path = 'MatchIDList.txt'
 
 # Directory to save downloaded and extracted files
 output_directory = "C:/Users/S_CSIS-PostGrad/Documents/Honours/Project/MLMatchMaker/CSGODemo/demos"
