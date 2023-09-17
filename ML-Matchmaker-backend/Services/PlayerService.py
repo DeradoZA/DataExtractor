@@ -29,8 +29,38 @@ class PlayerService:
 
         return playerList[randomPlayerValue][0]
     
-    def calculatePlayerStats (self):
-        pass
+    def calculatePlayerStats (self, playerID):
+        playerAveragedQuery = f"""
+            SELECT SteamID, AVG(RWS), AVG(Rating), AVG(Rating2), AVG(KR_Ratio),
+            AVG(KD_Ratio), AVG(KAST), AVG(ADR)
+            FROM (
+            SELECT SteamID, RWS, Rating, Rating2, KR_Ratio, KD_Ratio, KAST, ADR
+            FROM PlayerStats p
+            JOIN Matches m on p.MatchID = m.MatchID
+            WHERE SteamID = '{playerID}'
+            ORDER BY m.MatchID DESC
+            LIMIT 5
+            ) as LastMatches
+        """
+        self.cursor.execute(playerAveragedQuery)
+        averagedStats = self.cursor.fetchone()
+
+        return averagedStats
+    
+    def getPlayerELO(self, playerID):
+        queryPlayerELO = f"""
+            SELECT p.ELO
+            FROM playerelos p
+            WHERE steamID = {playerID}
+            ORDER BY p.MatchTime DESC
+            LIMIT 1
+        """
+
+        self.cursor.execute(queryPlayerELO)
+        queryResult = self.cursor.fetchone()
+        playerELO = queryResult[0]
+
+        return playerELO
 
     def searchForPlayerInList (self, playerListIDs, playerID):
         isPlayerInList = False

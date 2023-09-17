@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "./ML-Matchmaker-backend/Services",
+        "./ML-Matchmaker-backend/Shared"
+    ]
+}

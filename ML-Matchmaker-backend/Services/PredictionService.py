@@ -1,7 +1,7 @@
 import tensorflow as tf
-from Shared.ModelCreator import ModelCreator
+from ModelCreator import ModelCreator
 
-class PrecitionService:
+class PredictionService:
     def __init__(self, modelSavePath) -> None:
         self.modelDirectory = modelSavePath
         self.modelCreator = ModelCreator(self.modelDirectory)
