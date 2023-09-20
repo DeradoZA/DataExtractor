@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timedelta
 from mysql.connector import Error, connect
 
-def FetchMatchList(API_KEY, HubIDList, MatchLimit):
+def FetchMatchList(API_KEY, HubIDList, MatchLimit, cursor):
     matchIDList = []
     matchTimeList = []
     offset = 0
@@ -48,7 +48,19 @@ def FetchMatchList(API_KEY, HubIDList, MatchLimit):
                                 if (datetime.utcnow() - matchDatetime) <= timedelta(days=120):
                                     demoLink = match["demo_url"][0]
                                     matchInfo = f"{matchID},{matchTime}-{demoLink}"
-                                    file.write(f"{matchInfo}\n")
+
+                                    query = f"""
+                                        SELECT MatchID
+                                        FROM Matches
+                                        WHERE MatchID = '{matchID}'
+                                    """
+
+                                    cursor.execute(query)
+
+                                    matchSearch = cursor.fetchall()
+
+                                    if len(matchSearch) == 0:
+                                        file.write(f"{matchInfo}\n")
 
                                     gamesProcessedCounter += 1
                                 else:
@@ -95,4 +107,4 @@ if __name__ == "__main__":
     except Error as e:
         print(e)
 
-    matchIDList, matchTimeList = FetchMatchList(FACEIT_API_KEY, HUB_ID_LIST, 70000)
+    matchIDList, matchTimeList = FetchMatchList(FACEIT_API_KEY, HUB_ID_LIST, 70000, cursor)

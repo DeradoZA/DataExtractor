@@ -1,9 +1,6 @@
 select count(*) from matches 
 select count(*) from players
-<<<<<<< HEAD
 select count(*) from playerstats
-=======
->>>>>>> e376f749dc59d6869633a4e058a242570fb2d9e7
 
 select * from playerstats where MatchID = "1-00010bb0-f6e0-40e9-b743-67d0ede4cb2a-1-1"
 
@@ -43,12 +40,9 @@ SELECT steamID, COUNT(*) as GAMESPLAYED
 FROM PLAYERSTATS
 GROUP BY steamID
 HAVING COUNT(*) > 3;
-<<<<<<< HEAD
 
 
 SELECT AVG(Rating2), Team
 FROM playerstats ps
 where ps.MatchID = '1-e144d9ac-c3cd-4113-84fc-ae540f0da7c7'
 GROUP BY ps.team
-=======
->>>>>>> e376f749dc59d6869633a4e058a242570fb2d9e7
