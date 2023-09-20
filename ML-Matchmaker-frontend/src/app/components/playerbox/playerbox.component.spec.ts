@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { TaskItemComponent } from './task-item.component';
+import { PlayerboxComponent } from './playerbox.component';
 
-describe('TaskItemComponent', () => {
-  let component: TaskItemComponent;
-  let fixture: ComponentFixture<TaskItemComponent>;
+describe('PlayerboxComponent', () => {
+  let component: PlayerboxComponent;
+  let fixture: ComponentFixture<PlayerboxComponent>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [TaskItemComponent]
+      declarations: [PlayerboxComponent]
     });
-    fixture = TestBed.createComponent(TaskItemComponent);
+    fixture = TestBed.createComponent(PlayerboxComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -5,19 +5,19 @@ import {HttpClientModule} from '@angular/common/http'
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { HeaderComponent } from './components/header/header.component';
 import { ButtonComponent } from './components/button/button.component';
-import { TasksComponent } from './components/tasks/tasks.component';
-import { TaskItemComponent } from './components/task-item/task-item.component';
+import { PlayerqueueComponent } from './components/playerqueue/playerqueue.component';
+import { PlayerboxComponent } from './components/playerbox/playerbox.component';
+import { MatchComponent } from './components/match/match.component';
 
 
 @NgModule({
   declarations: [
     AppComponent,
-    HeaderComponent,
     ButtonComponent,
-    TasksComponent,
-    TaskItemComponent
+    PlayerqueueComponent,
+    PlayerboxComponent,
+    MatchComponent
   ],
   imports: [
     BrowserModule,
