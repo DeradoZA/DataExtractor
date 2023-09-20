@@ -14,8 +14,7 @@ class PlayerService:
 
         return playerList
 
-    def getRandomPlayer (self):
-        playerList = self.getAllPlayers()
+    def getRandomPlayer (self, allPlayers):
 
         queryAllPlayers = f"""
             SELECT COUNT(*)
@@ -25,9 +24,9 @@ class PlayerService:
         queryResult = self.cursor.fetchone()
         numPlayers = queryResult[0]
 
-        randomPlayerValue = random.randint(0, len(playerList))
+        randomPlayerValue = random.randint(0, len(allPlayers))
 
-        return playerList[randomPlayerValue][0]
+        return allPlayers[randomPlayerValue][0]
     
     def calculatePlayerStats (self, playerID):
         playerAveragedQuery = f"""
@@ -51,13 +50,17 @@ class PlayerService:
         queryPlayerELO = f"""
             SELECT p.ELO
             FROM playerelos p
-            WHERE steamID = {playerID}
+            WHERE steamID = '{playerID}'
             ORDER BY p.MatchTime DESC
             LIMIT 1
         """
 
         self.cursor.execute(queryPlayerELO)
         queryResult = self.cursor.fetchone()
+
+        if queryResult == None:
+            return None
+
         playerELO = queryResult[0]
 
         return playerELO
@@ -73,7 +76,7 @@ class PlayerService:
         return isPlayerInList
 
     def playerValidator (self, playerID):
-        playerHasEnoughGames = True
+        playerIsValid = True
 
         gameAmountQuery = f"""
             SELECT COUNT(*)
@@ -87,9 +90,14 @@ class PlayerService:
 
         numberOfGamesPlayed = queryResult[0]
 
-        if numberOfGamesPlayed < 5:
-            playerHasEnoughGames = False
+        playerELO = self.getPlayerELO(playerID)
 
-        return playerHasEnoughGames
+        if numberOfGamesPlayed < 5:
+            playerIsValid = False
+
+        if playerELO == None:
+            playerIsValid = False
+
+        return playerIsValid
 
     
