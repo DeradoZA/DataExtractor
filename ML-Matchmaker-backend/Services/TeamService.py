@@ -5,7 +5,7 @@ class TeamService:
         for i in range (1, 8):
             statCount = 0
             for j in range (len(playerStatsList)):
-                statCount = playerStatsList[j][i]
+                statCount += playerStatsList[j][i]
             
             averagedTeamStatCount = statCount / len(playerStatsList)
 

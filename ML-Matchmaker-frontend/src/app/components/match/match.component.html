@@ -1,1 +1,10 @@
-<p>match works!</p>
+<div class="row">
+    <div class="col-sm">
+      <app-playerqueue />
+    </div>
+    <div class="col-sm">
+      <app-playerqueue />
+    </div>
+    <app-button (customClick)="handleClick()"/>
+    <h1 class="text-primary">{{match_prediction}}</h1>
+</div>

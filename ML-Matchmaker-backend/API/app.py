@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
 import os
 import sys
 import numpy as np
@@ -11,11 +12,11 @@ from DBConnectionCreator import DBConnectionCreator
 from TeamService import TeamService
 from PredictionService import PredictionService
 
-
-
 app = Flask(__name__)
 
-@app.route('/randomMatch')
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:4200"}})
+
+@app.route('/api/randomMatch')
 def getRandomMatch():
     modelPath = os.path.join(os.getcwd(), "..", "..", "CSGOML", "CSGOPredictor", "bestModel", "best_model.h5")
     JSONOutput = {}

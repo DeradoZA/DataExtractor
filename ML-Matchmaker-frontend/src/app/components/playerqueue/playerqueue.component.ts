@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-playerqueue',
@@ -6,5 +6,6 @@ import { Component } from '@angular/core';
   styleUrls: ['./playerqueue.component.css']
 })
 export class PlayerqueueComponent {
-
+    @Input() teamStats: number[] = [];
+    @Input() playerTeamStats: number[] = [];
 }

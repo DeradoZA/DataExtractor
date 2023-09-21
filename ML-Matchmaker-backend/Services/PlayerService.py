@@ -24,7 +24,7 @@ class PlayerService:
         queryResult = self.cursor.fetchone()
         numPlayers = queryResult[0]
 
-        randomPlayerValue = random.randint(0, len(allPlayers))
+        randomPlayerValue = random.randint(0, len(allPlayers) - 1)
 
         return allPlayers[randomPlayerValue][0]
     
