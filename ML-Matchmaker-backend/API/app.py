@@ -1,4 +1,5 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+from flask_cors import CORS
 import os
 import sys
 import numpy as np
@@ -11,11 +12,11 @@ from DBConnectionCreator import DBConnectionCreator
 from TeamService import TeamService
 from PredictionService import PredictionService
 
-
-
 app = Flask(__name__)
 
-@app.route('/randomMatch')
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:4200"}})
+
+@app.route('/api/randomMatch')
 def getRandomMatch():
     modelPath = os.path.join(os.getcwd(), "..", "..", "CSGOML", "CSGOPredictor", "bestModel", "best_model.h5")
     JSONOutput = {}
@@ -128,6 +129,42 @@ def getRandomMatch():
 
     return jsonify(JSONOutput)
 
+@app.route('/api/customMatch', methods=['POST'])
+def postCustomMatch():
+    modelPath = os.path.join(os.getcwd(), "..", "..", "CSGOML", "CSGOPredictor", "bestModel", "best_model.h5")
+    JSONOutput = {}
+
+    predictionService = PredictionService(modelPath)
+
+    matchData = request.get_json()
+
+    team_a_data = matchData.get('teamA', {})
+    team_b_data = matchData.get('teamB', {})
+
+    print(team_a_data)
+
+    teamAStats = []
+    teamBStats = []
+
+    for value in team_a_data.values():
+        teamAStat = float(value)
+        teamAStats.append(teamAStat)
+
+    for value in team_b_data.values():
+        teamBStat = float(value)
+        teamBStats.append(teamBStat)
+
+    fullMatchStats = teamAStats + teamBStats
+    fullMatchStats = np.array(fullMatchStats)
+    fullMatchStats = np.reshape(fullMatchStats, (1, -1))
+
+    print(fullMatchStats)
+
+    matchPrediction = predictionService.PredictClassChances(fullMatchStats)
+
+    JSONOutput['match_prediction'] = float(matchPrediction[0][0])
+
+    return jsonify(JSONOutput)
     
 
         
